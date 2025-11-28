@@ -61,7 +61,7 @@ class SensorPublisher(threading.Thread):
         :param value_func: Function to generate the sensor value.
         """
         super().__init__(daemon=True)
-        self.client = mqtt.Client(client_id)
+        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id)
         self.topic = topic
         self.interval = interval
         self.value_func = value_func
@@ -81,6 +81,7 @@ class SensorPublisher(threading.Thread):
             payload = make_payload(self.topic, value)
             payload_str = json.dumps(payload)
             rc = self.client.publish(self.topic, payload_str)
+            print(f"Published to {self.topic}: {payload_str} (rc={rc[0]})")
             time.sleep(self.interval)
 
 
