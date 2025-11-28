@@ -1,6 +1,7 @@
 import time
 import json
 import random
+import logging
 import threading
 import paho.mqtt.client as mqtt
 from datetime import datetime
@@ -9,6 +10,8 @@ BROKER = "localhost"
 PORT = 1883
 CLIENT_PREFIX = "pub_client_"
 STUDENT_ID = "12217558"
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 
 def make_payload(sensor_type, value):
@@ -65,6 +68,7 @@ class SensorPublisher(threading.Thread):
         self.topic = topic
         self.interval = interval
         self.value_func = value_func
+        self.logfile = f'logs/pub_{topic.replace("/", "_")}.log'
 
     def run(self):
         """
@@ -81,6 +85,11 @@ class SensorPublisher(threading.Thread):
             payload = make_payload(self.topic, value)
             payload_str = json.dumps(payload)
             rc = self.client.publish(self.topic, payload_str)
+
+            logging.info('PUBLISHED to %s: %s', self.topic, payload_str)
+            with open(self.logfile, 'a') as f:
+                f.write(f"{datetime.utcnow().isoformat()}Z {payload_str}\n")
+
             print(f"Published to {self.topic}: {payload_str} (rc={rc[0]})")
             time.sleep(self.interval)
 

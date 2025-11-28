@@ -1,10 +1,14 @@
 import json
+import logging
 import paho.mqtt.client as mqtt
 from datetime import datetime
 
 BROKER = "localhost"
 PORT = 1883
 STUDENT_ID = "12217558"
+LOGFILE = "logs/subscriber_log.txt"
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
 
 def on_connect(client, userdata, flags, rc):
@@ -15,6 +19,7 @@ def on_connect(client, userdata, flags, rc):
     :param flags: Response flags sent by the broker.
     :param rc: The connection result.
     """
+    logging.info("Connected to broker with result code %s", rc)
     print(f"Connected with result code {rc}")
     client.subscribe(f"sensors/#")
 
@@ -39,6 +44,15 @@ def on_message(client, userdata, msg):
         "topic": msg.topic,
         "payload": data,
     }
+
+    with open(LOGFILE, "a") as f:
+        f.write(str(entry) + "\n")
+
+    topic_safe = msg.topic.replace("/", "_")
+    with open(f"logs/sub_{topic_safe}.log", "a") as f:
+        f.write(f"{entry['received_at']} {entry['payload']}\n")
+
+    logging.info("RECEIVED %s : %s", msg.topic, payload)
 
     print(f"Logged entry: {entry}")
     print(f"{entry['received_at']} {entry['payload']}")
